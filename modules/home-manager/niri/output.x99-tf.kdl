@@ -1,0 +1,10 @@
+// Output configuration for the `x99-tf` host only.
+// This file is deployed only on x99-tf (see modules/home-manager/desktop.nix:
+// `output.<hostname>.kdl` is gated per machine). For a new machine, add an
+// `output.<hostname>.kdl` — run `niri msg outputs` to list outputs/modes.
+// Machines without one fall back to niri's auto-detection.
+output "DP-1" {
+    mode "1920x1080@144.00"
+    scale 1
+    transform "normal"
+}

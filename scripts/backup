@@ -1,0 +1,119 @@
+#!/usr/bin/env bash
+# Backup critical NixOS config files with age encryption
+#
+# Usage: ./scripts/backup [backup-dir]
+#
+# Creates an encrypted backup of your sops age key and SSH keys.
+# You will be prompted for a passphrase — remember it!
+# Without it, the backup cannot be restored.
+set -euo pipefail
+
+BACKUP_DIR="${1:-$HOME/nixos-backup}"
+AGE_KEY="${HOME}/.config/sops/age/keys.txt"
+
+# Use age via nix run if not installed directly
+if command -v age &> /dev/null; then
+    AGE="age"
+else
+    AGE="nix run nixpkgs#age --"
+fi
+
+echo "🔐 NixOS Config Backup"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo
+
+mkdir -p "$BACKUP_DIR"
+
+# 1. Backup age key (CRITICAL — encrypted with passphrase)
+if [ -f "$AGE_KEY" ]; then
+    echo "🔑 Enter a passphrase to encrypt your age key backup:"
+    if $AGE -p -o "$BACKUP_DIR/age-key.txt.age" "$AGE_KEY"; then
+        chmod 600 "$BACKUP_DIR/age-key.txt.age"
+        echo "✅ Age key encrypted and backed up"
+    else
+        echo "❌ ERROR: Failed to encrypt age key"
+        exit 1
+    fi
+else
+    echo "⚠️  Age key not found at $AGE_KEY"
+    echo "   Skipping age key backup"
+fi
+
+# 2. Backup SSH keys (encrypted with passphrase)
+if [ -d "${HOME}/.ssh" ]; then
+    echo
+    echo "🔑 Enter a passphrase to encrypt your SSH key backup:"
+    tar czf - -C "$HOME" .ssh/ | $AGE -p -o "$BACKUP_DIR/ssh-keys.tar.gz.age"
+    chmod 600 "$BACKUP_DIR/ssh-keys.tar.gz.age"
+    echo "✅ SSH keys encrypted and backed up"
+fi
+
+# 3. Write restore instructions into the backup folder
+cat > "$BACKUP_DIR/RESTORE.txt" << EOF
+# NixOS Config Backup — Restore Instructions
+
+## What's in this backup
+
+  age-key.txt.age       Encrypted sops-nix age key (CRITICAL)
+  ssh-keys.tar.gz.age   Encrypted ~/.ssh directory
+
+## Prerequisites
+
+  age must be installed. On NixOS:
+    nix run nixpkgs#age -- --version
+
+## How to decrypt
+
+  1. Restore the age key (CRITICAL — needed to decrypt NixOS secrets):
+
+     nix run nixpkgs#age -- -d age-key.txt.age > ~/.config/sops/age/keys.txt
+     chmod 600 ~/.config/sops/age/keys.txt
+
+  2. Restore SSH keys:
+
+     nix run nixpkgs#age -- -d ssh-keys.tar.gz.age | tar xzf - -C ~
+     chmod 700 ~/.ssh
+     chmod 600 ~/.ssh/id_*
+
+  You will be prompted for the passphrase you set during backup.
+
+## After restoring
+
+  1. Clone the config repo:
+     git clone git@github.com:ChicoOneForAll/nixos-config.git
+     cd nixos-config
+
+  2. Generate hardware config (if on a new machine):
+     sudo nixos-generate-config --dir /tmp/hw
+     sudo cp /tmp/hw/hardware-configuration.nix hosts/<hostname>/
+
+  3. Rebuild:
+     sudo nixos-rebuild switch --flake .#<hostname>
+
+## If the age key is lost
+
+  Without the age key (or its passphrase), secrets CANNOT be decrypted.
+  You would need to generate a new age key and re-create all secrets:
+    nix run nixpkgs#age -- -keygen -o ~/.config/sops/age/keys.txt
+  Then update .sops.yaml with the new public key and re-encrypt secrets.
+
+## Remember
+
+  - Keep this backup in multiple safe locations (USB, password manager).
+  - The passphrase CANNOT be recovered — memorize it or store it safely.
+  - Test your backup: try the decrypt commands above on a copy.
+EOF
+echo "✅ Restore instructions written (RESTORE.txt)"
+
+echo
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "📁 Backup saved to: $BACKUP_DIR"
+echo
+echo "Encrypted files:"
+ls -lh "$BACKUP_DIR" | tail -n +2
+echo
+echo "⚠️  IMPORTANT:"
+echo "   • Store this backup in multiple safe locations (USB, password manager)"
+echo "   • Without the age key, you cannot decrypt your NixOS secrets!"
+echo "   • Remember your passphrase — it CANNOT be recovered!"
+echo "   • Read RESTORE.txt in the backup folder for full instructions"

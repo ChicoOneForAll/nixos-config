@@ -1,0 +1,18 @@
+// Input device configuration.
+// https://niri-wm.github.io/niri/Configuration:-Input
+input {
+    keyboard {
+        xkb {
+            // If empty, niri fetches xkb settings from org.freedesktop.locale1
+            // (manage with `localectl set-x11-keymap`).
+        }
+
+        // Enable numlock on startup.
+        numlock
+    }
+
+    touchpad {
+        tap
+        natural-scroll
+    }
+}

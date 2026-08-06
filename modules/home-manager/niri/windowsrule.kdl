@@ -1,0 +1,69 @@
+// Window and layer rules.
+// https://niri-wm.github.io/niri/Configuration:-Window-Rules
+// Work around WezTerm's initial configure bug by setting an empty
+// default-column-width.
+window-rule {
+    match app-id=r#"^org\.wezfurlong\.wezterm$"#
+    default-column-width {}
+}
+
+// Open the Firefox picture-in-picture player as floating by default.
+// Works for both host Firefox (app-id "firefox") and Flatpak
+// (app-id "org.mozilla.firefox").
+window-rule {
+    match app-id=r#"firefox$"# title="^Picture-in-Picture$"
+    open-floating true
+}
+
+// Rounded corners for a modern look.
+window-rule {
+    geometry-corner-radius 20
+    clip-to-geometry true
+}
+
+// Floating Noctalia settings window.
+window-rule {
+    match app-id="dev.noctalia.Noctalia"
+    open-floating true
+    default-column-width { fixed 1080; }
+    default-window-height { fixed 920; }
+}
+
+// Blur every app window without xray.
+window-rule {
+    background-effect {
+        blur true
+        xray false
+    }
+}
+
+// Noctalia surfaces: disable xray so blur looks correct.
+layer-rule {
+    match namespace="^noctalia-(bar-[^\"]+|notification|dock|panel|attached-panel|osd)$"
+    background-effect {
+        xray false
+        blur false
+    }
+}
+
+// Blur the Noctalia window switcher without xray.
+layer-rule {
+    match namespace="noctalia-window-switcher"
+    background-effect {
+        blur true
+        xray false
+    }
+}
+
+layer-rule {
+    match namespace="^noctalia-backdrop"
+    place-within-backdrop true
+}
+
+// Example: block out password managers from screen capture.
+/-window-rule {
+    match app-id=r#"^org\.keepassxc\.KeePassXC$"#
+    match app-id=r#"^org\.gnome\.World\.Secrets$"#
+
+    block-out-from "screen-capture"
+}

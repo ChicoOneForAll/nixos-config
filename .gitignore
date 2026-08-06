@@ -1,0 +1,33 @@
+# Nix build outputs
+result
+result-*
+
+# Secrets and sensitive files
+# Note: secrets.yaml is already committed (encrypted with sops-nix)
+# Only exclude unencrypted backups and keys
+.sops.yaml
+
+# Local backups
+*-backup/
+nixos-backup/
+
+# Age keys (NEVER commit these!)
+keys.txt
+**/age/keys.txt
+
+# SSH keys
+*.pem
+*.key
+id_rsa
+id_ed25519
+
+# GPG encrypted backups
+*.gpg
+
+# Temporary files
+*.hm-bak
+*.bak
+*~
+
+# Large assets (backed up to B2)
+assets/
