@@ -1,5 +1,6 @@
-# Niri config — fully managed by Home Manager as category files.
+# Desktop environment configuration for the Niri compositor.
 #
+# Niri config — fully managed by Home Manager as category files.
 # The whole niri setup lives in `niri/*.kdl` and is deployed to
 # ~/.config/niri/. `config.kdl` is generated and only contains includes, one
 # per category: input, layout, settings, keybinds, window rules and outputs.
@@ -53,6 +54,9 @@ let
   cfg = config.niriConfig;
 in
 {
+  imports = [
+  ];
+
   options.niriConfig = {
     overwrite = lib.mkOption {
       type = lib.types.bool;
@@ -67,6 +71,7 @@ in
   };
 
   config = lib.mkMerge [
+    # Niri configuration
     # Override mode: fully Home Manager-managed files.
     (lib.mkIf cfg.overwrite {
       xdg.configFile =

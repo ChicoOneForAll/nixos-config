@@ -13,4 +13,8 @@
     };
     noctalia-greeter.enable = true;
   };
+
+  # Gate noctalia.service to only run in niri sessions.
+  # Niri sets NIRI_SOCKET, which noctalia relies on for its wayland session.
+  systemd.user.services.noctalia.unitConfig.ConditionEnvironment = "NIRI_SOCKET";
 }
