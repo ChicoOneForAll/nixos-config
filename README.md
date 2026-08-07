@@ -142,7 +142,3 @@ just fmt
 - GNOME Keyring for application secrets
 - Polkit for privilege management
 - No secrets committed to git (see `.gitignore`)
-
-## License
-
-MIT
