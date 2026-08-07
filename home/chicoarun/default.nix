@@ -1,4 +1,3 @@
-
 {
   stateVersion ? "26.11",
   ...
@@ -14,7 +13,6 @@
     homeDirectory = "/home/chicoarun";
     inherit stateVersion;
   };
-
 
   niriConfig.overwrite = true;
 
